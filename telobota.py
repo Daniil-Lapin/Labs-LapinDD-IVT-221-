@@ -74,26 +74,26 @@ async def guess_number(message: types.Message):
         await message.answer("Вы ввели не целое число")
 
 
-# Хэндлер для выбора режима игры
-@dp.message_handler(Text(equals="Я загадываю"))
-async def user_guessed_number(message: types.Message):
-    global number_to_guess, number_of_attempts
-    number_to_guess = None
-    number_of_attempts = 0  # Задаем количество попыток на 0
-    await message.answer("Введите число, которое я должен отгадать:")
-
-
-# Хэндлер для принятия загаданного числа пользователем
-@dp.message_handler(lambda message: number_to_guess is None)
-async def set_number_to_guess(message: types.Message):
-    global number_to_guess
-    try:
-        number_to_guess = int(message.text)
-        await message.answer("Загаданное число принято!")
-
-
-    except ValueError:
-        await message.answer("Вы ввели не целое число, попробуйте еще раз")
+# # Хэндлер для выбора режима игры
+# @dp.message_handler(Text(equals="Я загадываю"))
+# async def user_guessed_number(message: types.Message):
+#     global number_to_guess, number_of_attempts
+#     number_to_guess = None
+#     number_of_attempts = 0  # Задаем количество попыток на 0
+#     await message.answer("Введите число, которое я должен отгадать:")
+#
+#
+# # Хэндлер для принятия загаданного числа пользователем
+# @dp.message_handler(lambda message: number_to_guess is None)
+# async def set_number_to_guess(message: types.Message):
+#     global number_to_guess
+#     try:
+#         number_to_guess = int(message.text)
+#         await message.answer("Загаданное число принято!")
+#
+#
+#     except ValueError:
+#         await message.answer("Вы ввели не целое число, попробуйте еще раз")
 
 
 def main():
