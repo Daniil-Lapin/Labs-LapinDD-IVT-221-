@@ -93,7 +93,7 @@ async def set_number_to_guess(message: types.Message):
 
 
     except ValueError:
-        await message.answer("Вы ввели не целое число")
+        await message.answer("Вы ввели не целое число, попробуйте еще раз")
 
 
 def main():
