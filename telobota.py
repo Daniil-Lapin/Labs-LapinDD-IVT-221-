@@ -1,10 +1,9 @@
 import random
 import logging
-import aiogram.utils.markdown as md
 from aiogram import Bot, Dispatcher, types
 from aiogram.dispatcher.filters import Text
-from aiogram.types import ParseMode
 from aiogram.utils import executor
+import asyncio
 
 # Настройка логирования для устранения ошибок
 logging.basicConfig(level=logging.INFO)
@@ -17,6 +16,7 @@ dp = Dispatcher(bot)
 minimum = 1
 maximum = 10
 
+numbers = {}
 
 # Функция для рандомного выбора числа
 def generate_number():
@@ -30,7 +30,6 @@ number_of_attempts = 0
 # Клавиатура для выбора режима игры
 game_mode_keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
 game_mode_keyboard.add(types.KeyboardButton("Я загадываю"), types.KeyboardButton("Бот загадывает"))
-
 
 # Хэндлер для команды /start
 @dp.message_handler(commands=['start'])
@@ -74,27 +73,47 @@ async def guess_number(message: types.Message):
         await message.answer("Вы ввели не целое число")
 
 
-# # Хэндлер для выбора режима игры
-# @dp.message_handler(Text(equals="Я загадываю"))
-# async def user_guessed_number(message: types.Message):
-#     global number_to_guess, number_of_attempts
-#     number_to_guess = None
-#     number_of_attempts = 0  # Задаем количество попыток на 0
-#     await message.answer("Введите число, которое я должен отгадать:")
-#
-#
-# # Хэндлер для принятия загаданного числа пользователем
-# @dp.message_handler(lambda message: number_to_guess is None)
-# async def set_number_to_guess(message: types.Message):
-#     global number_to_guess
-#     try:
-#         number_to_guess = int(message.text)
-#         await message.answer("Загаданное число принято!")
-#
-#
-#     except ValueError:
-#         await message.answer("Вы ввели не целое число, попробуйте еще раз")
 
 
+@dp.message_handler(Text(equals="Я загадываю"))
+async def start(message: types.Message):
+    await message.answer("Загадайте число и скажите в каком диапозоне мне искать(Напишите: 100 (если от 1 до 100))")
+
+@dp.message_handler(Text(equals=["да", "нет"]))
+async def check_answer(message: types.Message):
+    chat_id = message.chat.id
+    if message.text.lower() == "да":
+        await bot.send_message(chat_id, "Ура, я сегодня в ударе!!!")
+        del numbers[chat_id]
+    else:
+        await bot.send_message(chat_id, "Хорошо, продолжим")
+        await guess_number(message)
+
+@dp.message_handler()
+async def guess_number(message: types.Message):
+    chat_id = message.chat.id
+    if chat_id not in numbers:
+        numbers[chat_id] = {}
+        numbers[chat_id]['min'] = 1
+        numbers[chat_id]['max'] = int(message.text)
+        numbers[chat_id]['numbers'] = []
+        numbers[chat_id]['tries'] = 0
+    try2guess = random.randint(numbers[chat_id]['min'], numbers[chat_id]['max'])
+    while try2guess in numbers[chat_id]['numbers']:
+        try2guess = random.randint(numbers[chat_id]['min'], numbers[chat_id]['max'])
+    numbers[chat_id]['numbers'].append(try2guess)
+    numbers[chat_id]['tries'] += 1
+    await message.answer(f"Ваше число: {try2guess}")
+    await message.answer("Я угадал?")
+    answer = await dp.register_message_handler(check_answer, message=message)
+    if answer.text.lower() == "нет":
+        if try2guess < numbers[chat_id]['max']:
+            numbers[chat_id]['min'] = try2guess + 1
+        else:
+            numbers[chat_id]['max'] = try2guess - 1
+        await guess_number(message)
+    else:
+        await message.answer(f"Я угадал ваше число за {numbers[chat_id]['tries']} попыток")
+        del numbers[chat_id]
 def main():
     executor.start_polling(dp, skip_updates=True)
